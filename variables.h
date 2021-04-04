@@ -17,9 +17,11 @@
 #ifndef _VARIABLES_HEADER_
 #define _VARIABLES_HEADER_
 
-#define TW_MAIN_VERSION_STR       "3.5.0_10"
+#define TW_MAIN_VERSION_STR       "3.5.1_10"
 #define TW_VERSION_STR TW_MAIN_VERSION_STR TW_DEVICE_VERSION
-
+#define TW_SETTINGS_FILE            ".twrps"
+#define TW_RECOVERY_NAME            "TWRP"
+#define TW_DEFAULT_RECOVERY_FOLDER  "/" TW_RECOVERY_NAME
 #define TW_USE_COMPRESSION_VAR      "tw_use_compression"
 #define TW_FILENAME                 "tw_filename"
 #define TW_ZIP_INDEX                "tw_zip_index"
@@ -72,12 +74,14 @@
 #define TW_FORCE_DIGEST_CHECK_VAR   "tw_force_digest_check"
 #define TW_SKIP_DIGEST_CHECK_VAR    "tw_skip_digest_check"
 #define TW_SKIP_DIGEST_GENERATE_VAR "tw_skip_digest_generate"
+#define TW_SKIP_DIGEST_CHECK_ZIP_VAR    "tw_skip_digest_check_zip"
 #define TW_SIGNED_ZIP_VERIFY_VAR    "tw_signed_zip_verify"
 #define TW_INSTALL_REBOOT_VAR       "tw_install_reboot"
 #define TW_TIME_ZONE_VAR            "tw_time_zone"
 #define TW_RM_RF_VAR                "tw_rm_rf"
 
 #define TW_BACKUPS_FOLDER_VAR       "tw_backups_folder"
+#define TW_RECOVERY_FOLDER_VAR      "tw_recovery_folder"
 
 #define TW_SDEXT_SIZE               "tw_sdext_size"
 #define TW_SWAP_SIZE                "tw_swap_size"

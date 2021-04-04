@@ -160,6 +160,8 @@ enum TW_FSTAB_FLAGS {
 	TWFLAG_RESIZE,
 	TWFLAG_KEYDIRECTORY,
 	TWFLAG_WRAPPEDKEY,
+	TWFLAG_ADOPTED_MOUNT_DELAY,
+	TWFLAG_DM_USE_ORIGINAL_PATH,
 };
 
 /* Flags without a trailing '=' are considered dual format flags and can be
@@ -204,6 +206,8 @@ const struct flag_list tw_flags[] = {
 	{ "resize",                 TWFLAG_RESIZE },
 	{ "keydirectory=",          TWFLAG_KEYDIRECTORY },
 	{ "wrappedkey",             TWFLAG_WRAPPEDKEY },
+	{ "adopted_mount_delay=",   TWFLAG_ADOPTED_MOUNT_DELAY },
+	{ "dm_use_original_path",   TWFLAG_DM_USE_ORIGINAL_PATH },
 	{ 0,                        0 },
 };
 
@@ -268,6 +272,9 @@ TWPartition::TWPartition() {
 	SlotSelect = false;
 	Key_Directory = "";
 	Is_Super = false;
+	Adopted_Mount_Delay = 0;
+	Original_Path = "";
+	Use_Original_Path = false;
 }
 
 TWPartition::~TWPartition(void) {
@@ -667,7 +674,7 @@ void TWPartition::Setup_Data_Partition(bool Display_Error) {
 	} else if (!Mount(false)) {
 		if (Is_Present) {
 			if (Key_Directory.empty()) {
-				set_partition_data(Actual_Block_Device.c_str(), Crypto_Key_Location.c_str(),
+				set_partition_data(Use_Original_Path ? Original_Path.c_str() : Actual_Block_Device.c_str(), Crypto_Key_Location.c_str(),
 				Fstab_File_System.c_str());
 				if (cryptfs_check_footer() == 0) {
 					Is_Encrypted = true;
@@ -1006,8 +1013,14 @@ void TWPartition::Apply_TW_Flag(const unsigned flag, const char* str, const bool
 		case TWFLAG_ALTDEVICE:
 			Alternate_Block_Device = str;
 			break;
+		case TWFLAG_ADOPTED_MOUNT_DELAY:
+			Adopted_Mount_Delay = atoi(str);
+			break;
 		case TWFLAG_KEYDIRECTORY:
 			Key_Directory = str;
+			break;
+		case TWFLAG_DM_USE_ORIGINAL_PATH:
+			Use_Original_Path = true;
 			break;
 		default:
 			// Should not get here
@@ -1220,6 +1233,8 @@ void TWPartition::Setup_Data_Media() {
 
 void TWPartition::Find_Real_Block_Device(string& Block, bool Display_Error) {
 	char device[PATH_MAX], realDevice[PATH_MAX];
+
+	Original_Path = Block;
 
 	strcpy(device, Block.c_str());
 	memset(realDevice, 0, sizeof(realDevice));
@@ -1672,6 +1687,12 @@ bool TWPartition::Wipe(string New_File_System) {
 	if (Mount_Point == "/cache")
 		Log_Offset = 0;
 
+	if (Mount_Point == PartitionManager.Get_Android_Root_Path()) {
+		if (tw_get_default_metadata(PartitionManager.Get_Android_Root_Path().c_str()) != 0) {
+			gui_msg(Msg(msg::kWarning, "restore_system_context=Unable to get default context for {1} -- Android may not boot.")(PartitionManager.Get_Android_Root_Path()));
+		}
+	}
+
 	if (Has_Data_Media && Current_File_System == New_File_System) {
 		wiped = Wipe_Data_Without_Wiping_Media();
 		if (Mount_Point == "/data" && TWFunc::get_log_dir() == DATA_LOGS_DIR) {
@@ -1711,6 +1732,9 @@ bool TWPartition::Wipe(string New_File_System) {
 		if (Mount_Point == "/cache" && TWFunc::get_log_dir() != DATA_LOGS_DIR)
 			DataManager::Output_Version();
 
+		if (Mount_Point == PartitionManager.Get_Android_Root_Path()) {
+			tw_set_default_metadata(PartitionManager.Get_Android_Root_Path().c_str());
+		}
 		if (update_crypt) {
 			Setup_File_System(false);
 			if (Is_Encrypted && !Is_Decrypted) {
